@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Icon Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            text-align: center;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            margin: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple Icon Generator</h1>
+    <p>Click to generate icons, then right-click each canvas to save as PNG</p>
+    
+    <h2>192x192 Icon</h2>
+    <canvas id="icon192" width="192" height="192"></canvas>
+    <button onclick="generateIcon(192)">Generate 192x192</button>
+    
+    <h2>512x512 Icon</h2>
+    <canvas id="icon512" width="512" height="512"></canvas>
+    <button onclick="generateIcon(512)">Generate 512x512</button>
+    
+    <script>
+        function generateIcon(size) {
+            const canvas = document.getElementById('icon' + size);
+            const ctx = canvas.getContext('2d');
+            
+            // Gradient background
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+            
+            // Draw fitness icon (simple dumbbell)
+            ctx.fillStyle = 'white';
+            ctx.font = `bold ${size/3}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🏋️', size/2, size/2 - 10);
+            
+            ctx.font = `${size/8}px Arial`;
+            ctx.fillText('90', size/2, size/2 + size/5);
+        }
+        
+        // Generate on load
+        window.onload = function() {
+            generateIcon(192);
+            generateIcon(512);
+        };
+    </script>
+</body>
+</html>
+

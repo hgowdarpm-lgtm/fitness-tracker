@@ -1,0 +1,25 @@
+{
+  "name": "90-Day Fitness Tracker",
+  "short_name": "Fitness Tracker",
+  "description": "Track your 90-day transformation from 83kg to 70kg with daily workouts and weight tracking",
+  "start_url": "/fitness-tracker/",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#667eea",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
+

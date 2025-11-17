@@ -406,7 +406,7 @@
 
                     <div class="link-group">
                         <h3>💪 Main Workout (40-50 min)</h3>
-                        <a href="https://www.youtube.com/watch?v=ykJmrZ5v0Oo" target="_blank" class="workout-link" data-type="nonoffice-main">
+                        <a href="https://www.youtube.com/watch?v=3x1cZIExciE" target="_blank" class="workout-link" data-type="nonoffice-main">
                             ✅ 40-Min Upper Body Strength (Dumbbells)
                         </a>
                         <a href="https://www.youtube.com/watch?v=DENm10PI8Xc" target="_blank" class="workout-link" data-type="nonoffice-main2">
@@ -428,7 +428,7 @@
                         <a href="https://www.youtube.com/watch?v=AG3lA6ZTfVc" target="_blank" class="workout-link" data-type="nonoffice-hiit3">
                             ✅ 15-Min Quick HIIT Workout
                         </a>
-                        <a href="https://www.youtube.com/watch?v=ykJmrZ5v0Oo" target="_blank" class="workout-link" data-type="nonoffice-hiit4">
+                        <a href="https://www.youtube.com/watch?v=XeYkCenyldM" target="_blank" class="workout-link" data-type="nonoffice-hiit4">
                             ✅ 30-Min HIIT Cardio & Strength
                         </a>
                     </div>
@@ -448,7 +448,7 @@
 
                     <div class="link-group">
                         <h3>🏋️ Resistance Training (25-35 min)</h3>
-                        <a href="https://www.youtube.com/watch?v=ykJmrZ5v0Oo" target="_blank" class="workout-link" data-type="nonoffice-resistance">
+                        <a href="https://www.youtube.com/watch?v=PoLFAhJU-SY" target="_blank" class="workout-link" data-type="nonoffice-resistance">
                             ✅ 30-Min Full Body Resistance Training
                         </a>
                         <a href="https://www.youtube.com/watch?v=DENm10PI8Xc" target="_blank" class="workout-link" data-type="nonoffice-resistance2">
@@ -638,7 +638,29 @@
                 </div>
 
                 <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e0e0e0;">
-                    <h3 style="font-size: 16px; margin-bottom: 15px; color: #666;">Settings</h3>
+                    <h3 style="font-size: 16px; margin-bottom: 15px; color: #666;">Day Control</h3>
+                    <div id="day-mode-status" style="font-size: 14px; margin-bottom: 15px; text-align: center; color: #666;">
+                        Mode: Automatic
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <input type="number" id="manual-day-input" min="1" max="90" value="1" 
+                               style="flex: 1; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;"
+                               placeholder="Day (1-90)"
+                               onkeypress="if(event.key === 'Enter') setManualDay(this.value)">
+                        <button class="btn btn-primary" onclick="setManualDay(document.getElementById('manual-day-input').value)" 
+                                style="padding: 10px 20px; font-size: 14px;">
+                            Set Day
+                        </button>
+                    </div>
+                    <button class="btn btn-secondary" onclick="clearManualDay()" 
+                            style="width: 100%; margin-bottom: 20px; background: #6c757d; color: white;">
+                        Use Automatic Day
+                    </button>
+                    <p style="font-size: 12px; color: #999; margin-bottom: 20px; text-align: center;">
+                        Manually set the current day (1-90) or use automatic calculation based on start date
+                    </p>
+                    
+                    <h3 style="font-size: 16px; margin-bottom: 15px; color: #666; margin-top: 20px;">Settings</h3>
                     <button class="btn btn-secondary" onclick="resetApp()" style="background: #dc3545; color: white; width: 100%;">
                         🔄 Reset All Data
                     </button>
@@ -650,6 +672,10 @@
         </div>
     </div>
 
+    <!-- Load configuration and utility modules first -->
+    <script src="js/config.js"></script>
+    <script src="js/storage.js"></script>
+    <!-- Load main application logic -->
     <script src="app.js"></script>
 </body>
 </html>

@@ -1,8 +1,44 @@
-// Initialize app
+/**
+ * APP.JS - Main Application File
+ * 
+ * This is the main file that coordinates all the app's features.
+ * It handles user interactions, updates the UI, and manages the app's state.
+ * 
+ * FILE STRUCTURE:
+ * 1. Global Variables - App state that's shared across functions
+ * 2. Workout Data - Exercise videos organized by type
+ * 3. Initialization - Sets up the app when page loads
+ * 4. Day Calculation - Figures out which day/week user is on
+ * 5. Manual Day Control - Allows user to manually set the day
+ * 6. Tab Management - Handles switching between tabs
+ * 7. Workout Management - Displays and manages workouts
+ * 8. Weight Tracking - Handles weight entries and display
+ * 9. Fasting Tracking - Handles fasting sessions
+ * 10. Period Tracking - Handles period mode
+ * 11. Progress Display - Shows statistics and progress
+ * 12. Link Tracking - Tracks which workout links were clicked
+ * 
+ * NOTE: Some functions are now in separate modules (config.js, storage.js, dayCalculator.js)
+ * but this file still contains the main application logic.
+ */
+
+// ============================================
+// GLOBAL VARIABLES
+// ============================================
+// These variables store the app's current state
+// They're used throughout the app to track what's happening
+
+// Start date: When the user began their 90-day journey
+// This is used to calculate which day they're currently on
 let startDate = new Date();
-startDate.setHours(0, 0, 0, 0);
-let currentWeek = 1;
-let currentDay = 1;
+startDate.setHours(0, 0, 0, 0); // Set to midnight for accurate day calculations
+
+// Current week and day: Tracks progress through the 90-day program
+let currentWeek = 1;  // Week 1-13 (90 days / 7 days per week)
+let currentDay = 1;    // Day 1-90
+
+// Selected day type: 'office' (20 min) or 'nonoffice' (45-60 min)
+// Determines which workout set to show
 let selectedDayType = 'nonoffice';
 
 // Workout data for all 12 weeks
@@ -19,7 +55,7 @@ const workoutData = {
                     { name: "10-Min Cardio Warm-Up (Alternative)", url: "https://www.youtube.com/watch?v=M0uO8X3_tEA" }
                 ],
                 main: [
-                    { name: "40-Min Upper Body Strength (Dumbbells)", url: "https://www.youtube.com/watch?v=ykJmrZ5v0Oo" },
+                    { name: "40-Min Upper Body Strength (Dumbbells)", url: "https://www.youtube.com/watch?v=3x1cZIExciE" },
                     { name: "45-Min Lower Body & Glutes (Dumbbells)", url: "https://www.youtube.com/watch?v=DENm10PI8Xc" },
                     { name: "30-Min Core & Cardio Workout", url: "https://www.youtube.com/watch?v=AG3lA6ZTfVc" }
                 ],
@@ -29,7 +65,7 @@ const workoutData = {
                     { name: "10-Min Quick Sprint Burst", url: "https://www.youtube.com/watch?v=AG3lA6ZTfVc" }
                 ],
                 resistance: [
-                    { name: "30-Min Full Body Resistance Training", url: "https://www.youtube.com/watch?v=ykJmrZ5v0Oo" },
+                    { name: "30-Min Full Body Resistance Training", url: "https://www.youtube.com/watch?v=PoLFAhJU-SY" },
                     { name: "25-Min Bodyweight Resistance Workout", url: "https://www.youtube.com/watch?v=DENm10PI8Xc" },
                     { name: "35-Min Dumbbell Resistance Training", url: "https://www.youtube.com/watch?v=AG3lA6ZTfVc" }
                 ],
@@ -37,7 +73,7 @@ const workoutData = {
                     { name: "20-Min Full Body HIIT (No Equipment)", url: "https://www.youtube.com/watch?v=HhdYlniTjvg" },
                     { name: "25-Min High-Intensity Interval Training", url: "https://www.youtube.com/watch?v=M0uO8X3_tEA" },
                     { name: "15-Min Quick HIIT Workout", url: "https://www.youtube.com/watch?v=AG3lA6ZTfVc" },
-                    { name: "30-Min HIIT Cardio & Strength", url: "https://www.youtube.com/watch?v=ykJmrZ5v0Oo" }
+                    { name: "30-Min HIIT Cardio & Strength", url: "https://www.youtube.com/watch?v=XeYkCenyldM" }
                 ],
                 cooldown: [
                     { name: "20-Min Full Body Stretch & Mobility", url: "https://www.youtube.com/watch?v=DppDOK2SvP0" },
@@ -50,37 +86,192 @@ const workoutData = {
     }
 };
 
-// Initialize
+// ============================================
+// INITIALIZATION
+// ============================================
+/**
+ * APP INITIALIZATION
+ * 
+ * This runs when the page finishes loading.
+ * It sets up the app by:
+ * 1. Loading saved data from browser storage
+ * 2. Calculating which day the user is on
+ * 3. Updating all displays to show current data
+ * 
+ * WHY IT'S NEEDED:
+ * - Without this, the app would be blank when you open it
+ * - It restores your previous session (weights, workouts, etc.)
+ * - It ensures everything is in sync
+ */
 document.addEventListener('DOMContentLoaded', function() {
+    // Step 1: Load saved user data (weights, workouts, settings)
     loadSavedData();
+    
+    // Step 2: Figure out which day of the program we're on
     calculateCurrentDay();
-    updateDisplay();
-    updateWeightTable();
-    updateProgress();
-    updatePeriodDisplay();
-    updateFastingDisplay();
-    updateDayTypeButtons(); // Update button visibility based on period status
-    updateWorkoutDisplay();
+    
+    // Step 3: Update all displays with current data
+    updateDisplay();              // General display updates
+    updateWeightTable();          // Show weight entries
+    updateProgress();             // Show progress stats
+    updatePeriodDisplay();       // Show period mode status
+    updateFastingDisplay();       // Show fasting data
+    updateDayTypeButtons();       // Show/hide office/non-office buttons
+    updateWorkoutDisplay();       // Show today's workouts
+    updateManualDayUI();          // Show manual day control status
+    updateLinkCompletionStatus(); // Show which links were clicked today
 });
 
+/**
+ * Calculate Current Day
+ * 
+ * Figures out which day of the 90-day program the user is on.
+ * Uses storage module functions to get saved data.
+ * 
+ * HOW IT WORKS:
+ * 1. Checks if manual day mode is active (user manually set a day)
+ * 2. If manual: uses the manually set day
+ * 3. If automatic: calculates day from start date
+ * 4. Updates the week number and display
+ */
 function calculateCurrentDay() {
-    const saved = localStorage.getItem('startDate');
-    if (saved) {
-        startDate = new Date(saved);
+    // Get manual day setting from storage (if user manually set a day)
+    const manualDay = getManualDay();
+    const isManualMode = isManualDayMode();
+    
+    if (isManualMode && manualDay) {
+        // MANUAL MODE: User has manually set a day
+        // Clamp the day between 1 and 90 to prevent invalid values
+        currentDay = Math.max(1, Math.min(APP_CONFIG.TOTAL_DAYS, parseInt(manualDay, 10)));
+        currentWeek = Math.ceil(currentDay / APP_CONFIG.DAYS_PER_WEEK);
     } else {
-        localStorage.setItem('startDate', startDate.toISOString());
+        // AUTOMATIC MODE: Calculate day from start date
+        // Get the start date from storage
+        const savedStartDate = getStartDate();
+        
+        if (savedStartDate) {
+            // Use the saved start date
+            startDate = savedStartDate;
+        } else {
+            // First time using app: set today as start date
+            startDate = new Date();
+            startDate.setHours(0, 0, 0, 0); // Set to midnight for accurate calculation
+            saveStartDate(startDate);
+        }
+        
+        // Calculate how many days have passed since start date
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Set to midnight for accurate calculation
+        
+        // Get difference in milliseconds, convert to days
+        const timeDifference = today - startDate;
+        const daysDifference = Math.floor(timeDifference / (1000 * 60 * 60 * 24)) + 1;
+        
+        // Clamp day between 1 and 90
+        currentDay = Math.max(1, Math.min(APP_CONFIG.TOTAL_DAYS, daysDifference));
+        
+        // Calculate week number (Day 1-7 = Week 1, Day 8-14 = Week 2, etc.)
+        currentWeek = Math.ceil(currentDay / APP_CONFIG.DAYS_PER_WEEK);
     }
     
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const diffTime = today - startDate;
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    // Update the display in the header
+    const weekElement = document.getElementById('currentWeek');
+    const dayElement = document.getElementById('currentDay');
     
-    currentDay = Math.max(1, Math.min(90, diffDays));
-    currentWeek = Math.ceil(currentDay / 7);
+    if (weekElement) {
+        weekElement.textContent = `Week ${currentWeek}`;
+    }
+    if (dayElement) {
+        dayElement.textContent = `Day ${currentDay}`;
+    }
+}
+
+// ==================== MANUAL DAY CONTROL ====================
+
+/**
+ * Check if manual day mode is active
+ * Uses the storage module's STORAGE_KEYS constant
+ */
+function isManualDayMode() {
+    // Access localStorage directly using the storage module's key constant
+    return localStorage.getItem(STORAGE_KEYS.MANUAL_DAY_MODE) === 'true';
+}
+
+/**
+ * Set Manual Day
+ * 
+ * Allows user to manually jump to any day (1-90).
+ * Uses the storage module to save the setting.
+ * 
+ * @param {number|string} dayNumber - The day to jump to
+ * @returns {boolean} True if successful, false if invalid
+ */
+function setManualDay(dayNumber) {
+    // Convert to number and validate
+    const day = parseInt(dayNumber, 10);
     
-    document.getElementById('currentWeek').textContent = `Week ${currentWeek}`;
-    document.getElementById('currentDay').textContent = `Day ${currentDay}`;
+    // Check if the day number is valid (between 1 and 90)
+    if (isNaN(day) || day < 1 || day > APP_CONFIG.TOTAL_DAYS) {
+        alert(`Please enter a valid day number between 1 and ${APP_CONFIG.TOTAL_DAYS}`);
+        return false;
+    }
+    
+    // Save the manual day setting using storage module
+    saveManualDay(day);
+    
+    // Recalculate day (will now use manual mode)
+    calculateCurrentDay();
+    
+    // Refresh all displays to show the new day's data
+    updateWorkoutDisplay();
+    updateProgress();
+    updateManualDayUI();
+    updateLinkCompletionStatus();
+    
+    return true;
+}
+
+/**
+ * Clear Manual Day Override
+ * 
+ * Returns to automatic day calculation based on start date.
+ * Uses storage module to clear the manual day setting.
+ */
+function clearManualDay() {
+    // Use storage module to clear the manual day setting
+    // We access localStorage directly to avoid function name conflicts
+    localStorage.removeItem(STORAGE_KEYS.MANUAL_DAY_OVERRIDE);
+    localStorage.removeItem(STORAGE_KEYS.MANUAL_DAY_MODE);
+    
+    // Return to automatic calculation and refresh displays
+    calculateCurrentDay();
+    updateWorkoutDisplay();
+    updateProgress();
+    updateManualDayUI();
+    updateLinkCompletionStatus();
+}
+
+function updateManualDayUI() {
+    const manualMode = isManualDayMode();
+    const manualDayInput = document.getElementById('manual-day-input');
+    const dayModeStatus = document.getElementById('day-mode-status');
+    
+    if (manualDayInput) {
+        if (manualMode) {
+            const savedDay = localStorage.getItem('manualDayOverride');
+            manualDayInput.value = savedDay || currentDay;
+            if (dayModeStatus) {
+                dayModeStatus.textContent = `Mode: Manual (Day ${savedDay || currentDay})`;
+                dayModeStatus.style.color = '#667eea';
+            }
+        } else {
+            manualDayInput.value = currentDay;
+            if (dayModeStatus) {
+                dayModeStatus.textContent = 'Mode: Automatic';
+                dayModeStatus.style.color = '#666';
+            }
+        }
+    }
 }
 
 function showTab(tabName) {
@@ -112,6 +303,7 @@ function showTab(tabName) {
         updateFastingDisplay();
     } else if (tabName === 'progress') {
         updateProgress();
+        updateManualDayUI();
     }
 }
 
@@ -145,7 +337,7 @@ function selectDayType(type) {
     
     localStorage.setItem('selectedDayType', type);
     loadChecklist();
-    updateWorkoutDisplay();
+    updateWorkoutDisplay(); // This will call updateLinkCompletionStatus() at the end
 }
 
 function addWeight() {
@@ -428,27 +620,43 @@ function updateDisplay() {
     updateProgress();
 }
 
-// Track workout link clicks
+// Track workout link clicks - per day
 document.addEventListener('click', function(e) {
     if (e.target.classList.contains('workout-link')) {
-        // Mark link as visited in local storage
+        // Mark link as visited for current day
         const linkType = e.target.getAttribute('data-type');
         const visitedLinks = JSON.parse(localStorage.getItem('visitedLinks') || '{}');
-        visitedLinks[linkType] = true;
+        const dayKey = `day${currentDay}`;
+        
+        if (!visitedLinks[dayKey]) {
+            visitedLinks[dayKey] = {};
+        }
+        visitedLinks[dayKey][linkType] = true;
         localStorage.setItem('visitedLinks', JSON.stringify(visitedLinks));
         e.target.classList.add('completed');
     }
 });
 
-// Load visited links on page load
-window.addEventListener('load', function() {
+// Load visited links for current day
+function updateLinkCompletionStatus() {
     const visitedLinks = JSON.parse(localStorage.getItem('visitedLinks') || '{}');
+    const dayKey = `day${currentDay}`;
+    const dayLinks = visitedLinks[dayKey] || {};
+    
     document.querySelectorAll('.workout-link').forEach(link => {
         const linkType = link.getAttribute('data-type');
-        if (visitedLinks[linkType]) {
+        // Remove completed class first
+        link.classList.remove('completed');
+        // Add completed class if this link was visited today
+        if (dayLinks[linkType]) {
             link.classList.add('completed');
         }
     });
+}
+
+// Load visited links on page load
+window.addEventListener('load', function() {
+    updateLinkCompletionStatus();
 });
 
 function resetApp() {
@@ -483,6 +691,8 @@ function resetApp() {
             localStorage.removeItem('fastingData');
             localStorage.removeItem('activeFasting');
             localStorage.removeItem('periodData');
+            localStorage.removeItem('manualDayOverride');
+            localStorage.removeItem('manualDayMode');
             
             // Reset start date to today
             startDate = new Date();
@@ -507,6 +717,7 @@ function resetApp() {
             updatePeriodDisplay();
             updateFastingDisplay();
             updateWorkoutDisplay();
+            updateManualDayUI();
             
             // Reset day type selector
             selectDayType('nonoffice');
@@ -979,111 +1190,133 @@ function updateWorkoutDisplay() {
     
     if (!workoutsToShow) return;
     
-    // Update warmup links
+    // Helper function to get exercise for today - cycles through all options without repeating
+    function getExerciseForToday(exerciseArray, categoryName) {
+        if (!exerciseArray || exerciseArray.length === 0) return null;
+        // Use currentDay to cycle through exercises, ensuring no repeat until all are used
+        const index = (currentDay - 1) % exerciseArray.length;
+        return exerciseArray[index];
+    }
+    
+    // Collect all main exercise categories for rotation (main, HIIT, sprint, resistance)
+    const allMainCategories = [];
+    if (workoutsToShow.main) {
+        workoutsToShow.main.forEach(ex => allMainCategories.push({...ex, category: 'main'}));
+    }
+    if (workoutsToShow.hiit) {
+        workoutsToShow.hiit.forEach(ex => allMainCategories.push({...ex, category: 'hiit'}));
+    }
+    if (workoutsToShow.sprint) {
+        workoutsToShow.sprint.forEach(ex => allMainCategories.push({...ex, category: 'sprint'}));
+    }
+    if (workoutsToShow.resistance) {
+        workoutsToShow.resistance.forEach(ex => allMainCategories.push({...ex, category: 'resistance'}));
+    }
+    
+    // Get today's main exercise (rotates through all categories)
+    const selectedMainExercise = allMainCategories.length > 0 
+        ? allMainCategories[(currentDay - 1) % allMainCategories.length]
+        : null;
+    
+    // Get today's warmup
+    const selectedWarmup = getExerciseForToday(workoutsToShow.warmup, 'warmup');
+    
+    // Get today's cooldown (only for non-office)
+    const selectedCooldown = selectedDayType === 'nonoffice' 
+        ? getExerciseForToday(workoutsToShow.cooldown, 'cooldown')
+        : null;
+    
+    // Update warmup - show only one
     const warmupGroup = workoutSection.querySelector('.link-group:first-of-type');
     if (warmupGroup && workoutsToShow.warmup) {
         const warmupLinks = warmupGroup.querySelectorAll('.workout-link');
-        workoutsToShow.warmup.forEach((workout, index) => {
-            if (warmupLinks[index]) {
-                warmupLinks[index].href = workout.url;
-                warmupLinks[index].textContent = `✅ ${workout.name}`;
-                warmupLinks[index].setAttribute('data-type', `${selectedDayType}-warmup${index > 0 ? index + 1 : ''}`);
-            }
+        // Hide all warmup links first
+        warmupLinks.forEach(link => {
+            link.style.display = 'none';
         });
+        // Show only the selected one
+        if (selectedWarmup && warmupLinks[0]) {
+            warmupLinks[0].style.display = 'block';
+            warmupLinks[0].href = selectedWarmup.url;
+            warmupLinks[0].textContent = `✅ ${selectedWarmup.name}`;
+            warmupLinks[0].setAttribute('data-type', `${selectedDayType}-warmup-day${currentDay}`);
+        }
+        // Update warmup title
+        const warmupH3 = warmupGroup.querySelector('h3');
+        if (warmupH3) {
+            warmupH3.textContent = '🌡️ Warm-Up (Today\'s Exercise)';
+        }
     }
     
-    // Update main workout links
+    // Find all main workout groups
     const mainGroups = workoutSection.querySelectorAll('.link-group');
-    let mainIndex = -1;
+    const groupIndices = {
+        main: -1,
+        hiit: -1,
+        sprint: -1,
+        resistance: -1
+    };
+    
     mainGroups.forEach((group, idx) => {
         const h3 = group.querySelector('h3');
-        if (h3 && (h3.textContent.includes('Main') || h3.textContent.includes('💪'))) {
-            mainIndex = idx;
+        if (h3) {
+            const text = h3.textContent;
+            if (text.includes('Main') || text.includes('💪')) {
+                groupIndices.main = idx;
+            } else if (text.includes('HIIT') || text.includes('⚡')) {
+                groupIndices.hiit = idx;
+            } else if (text.includes('Sprint') || text.includes('🏃')) {
+                groupIndices.sprint = idx;
+            } else if (text.includes('Resistance') || text.includes('🏋️')) {
+                groupIndices.resistance = idx;
+            }
         }
     });
     
-    if (mainIndex >= 0 && workoutsToShow.main) {
-        const mainGroup = mainGroups[mainIndex];
-        const mainLinks = mainGroup.querySelectorAll('.workout-link');
-        workoutsToShow.main.forEach((workout, index) => {
-            if (mainLinks[index]) {
-                mainLinks[index].href = workout.url;
-                mainLinks[index].textContent = `✅ ${workout.name}`;
-                mainLinks[index].setAttribute('data-type', `${selectedDayType}-main${index > 0 ? index + 1 : ''}`);
-            }
-        });
-    }
-    
-    // Update HIIT links (for non-office)
-    if (selectedDayType === 'nonoffice' && workoutsToShow.hiit) {
-        let hiitIndex = -1;
-        mainGroups.forEach((group, idx) => {
-            const h3 = group.querySelector('h3');
-            if (h3 && (h3.textContent.includes('HIIT') || h3.textContent.includes('⚡'))) {
-                hiitIndex = idx;
-            }
-        });
-        
-        if (hiitIndex >= 0) {
-            const hiitGroup = mainGroups[hiitIndex];
-            const hiitLinks = hiitGroup.querySelectorAll('.workout-link');
-            workoutsToShow.hiit.forEach((workout, index) => {
-                if (hiitLinks[index]) {
-                    hiitLinks[index].href = workout.url;
-                    hiitLinks[index].textContent = `✅ ${workout.name}`;
-                    hiitLinks[index].setAttribute('data-type', `${selectedDayType}-hiit${index > 0 ? index + 1 : ''}`);
-                }
+    // Hide all main workout groups first
+    Object.values(groupIndices).forEach(idx => {
+        if (idx >= 0) {
+            const group = mainGroups[idx];
+            const links = group.querySelectorAll('.workout-link');
+            links.forEach(link => {
+                link.style.display = 'none';
             });
+            // Hide the entire group if it's not the selected category
+            if (selectedMainExercise && idx !== groupIndices[selectedMainExercise.category]) {
+                group.style.display = 'none';
+            } else {
+                group.style.display = 'block';
+            }
+        }
+    });
+    
+    // Show only the selected main exercise
+    if (selectedMainExercise && groupIndices[selectedMainExercise.category] >= 0) {
+        const selectedGroup = mainGroups[groupIndices[selectedMainExercise.category]];
+        const selectedLinks = selectedGroup.querySelectorAll('.workout-link');
+        
+        // Show only the first link with the selected exercise
+        if (selectedLinks[0]) {
+            selectedLinks[0].style.display = 'block';
+            selectedLinks[0].href = selectedMainExercise.url;
+            selectedLinks[0].textContent = `✅ ${selectedMainExercise.name}`;
+            selectedLinks[0].setAttribute('data-type', `${selectedDayType}-${selectedMainExercise.category}-day${currentDay}`);
+        }
+        
+        // Update the group title to show it's today's main workout
+        const h3 = selectedGroup.querySelector('h3');
+        if (h3) {
+            const categoryNames = {
+                main: '💪 Main Workout',
+                hiit: '⚡ HIIT Workout',
+                sprint: '🏃 Sprint Training',
+                resistance: '🏋️ Resistance Training'
+            };
+            h3.textContent = categoryNames[selectedMainExercise.category] || h3.textContent;
         }
     }
     
-    // Update sprint links (for non-office)
-    if (selectedDayType === 'nonoffice' && workoutsToShow.sprint) {
-        let sprintIndex = -1;
-        mainGroups.forEach((group, idx) => {
-            const h3 = group.querySelector('h3');
-            if (h3 && (h3.textContent.includes('Sprint') || h3.textContent.includes('🏃'))) {
-                sprintIndex = idx;
-            }
-        });
-        
-        if (sprintIndex >= 0) {
-            const sprintGroup = mainGroups[sprintIndex];
-            const sprintLinks = sprintGroup.querySelectorAll('.workout-link');
-            workoutsToShow.sprint.forEach((workout, index) => {
-                if (sprintLinks[index]) {
-                    sprintLinks[index].href = workout.url;
-                    sprintLinks[index].textContent = `✅ ${workout.name}`;
-                    sprintLinks[index].setAttribute('data-type', `${selectedDayType}-sprint${index > 0 ? index + 1 : ''}`);
-                }
-            });
-        }
-    }
-    
-    // Update resistance training links (for non-office)
-    if (selectedDayType === 'nonoffice' && workoutsToShow.resistance) {
-        let resistanceIndex = -1;
-        mainGroups.forEach((group, idx) => {
-            const h3 = group.querySelector('h3');
-            if (h3 && (h3.textContent.includes('Resistance') || h3.textContent.includes('🏋️'))) {
-                resistanceIndex = idx;
-            }
-        });
-        
-        if (resistanceIndex >= 0) {
-            const resistanceGroup = mainGroups[resistanceIndex];
-            const resistanceLinks = resistanceGroup.querySelectorAll('.workout-link');
-            workoutsToShow.resistance.forEach((workout, index) => {
-                if (resistanceLinks[index]) {
-                    resistanceLinks[index].href = workout.url;
-                    resistanceLinks[index].textContent = `✅ ${workout.name}`;
-                    resistanceLinks[index].setAttribute('data-type', `${selectedDayType}-resistance${index > 0 ? index + 1 : ''}`);
-                }
-            });
-        }
-    }
-    
-    // Update cooldown links (for non-office)
+    // Update cooldown - show only one (for non-office only)
     if (selectedDayType === 'nonoffice' && workoutsToShow.cooldown) {
         let cooldownIndex = -1;
         mainGroups.forEach((group, idx) => {
@@ -1096,15 +1329,27 @@ function updateWorkoutDisplay() {
         if (cooldownIndex >= 0) {
             const cooldownGroup = mainGroups[cooldownIndex];
             const cooldownLinks = cooldownGroup.querySelectorAll('.workout-link');
-            workoutsToShow.cooldown.forEach((workout, index) => {
-                if (cooldownLinks[index]) {
-                    cooldownLinks[index].href = workout.url;
-                    cooldownLinks[index].textContent = `✅ ${workout.name}`;
-                    cooldownLinks[index].setAttribute('data-type', `${selectedDayType}-cooldown${index > 0 ? index + 1 : ''}`);
-                }
+            // Hide all cooldown links first
+            cooldownLinks.forEach(link => {
+                link.style.display = 'none';
             });
+            // Show only the selected one
+            if (selectedCooldown && cooldownLinks[0]) {
+                cooldownLinks[0].style.display = 'block';
+                cooldownLinks[0].href = selectedCooldown.url;
+                cooldownLinks[0].textContent = `✅ ${selectedCooldown.name}`;
+                cooldownLinks[0].setAttribute('data-type', `${selectedDayType}-cooldown-day${currentDay}`);
+            }
+            // Update cooldown title
+            const cooldownH3 = cooldownGroup.querySelector('h3');
+            if (cooldownH3) {
+                cooldownH3.textContent = '🧘 Cool-Down (Today\'s Exercise)';
+            }
         }
     }
+    
+    // Update link completion status after workout display is updated
+    updateLinkCompletionStatus();
 }
 
 

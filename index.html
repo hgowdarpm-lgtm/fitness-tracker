@@ -307,6 +307,16 @@
             display: none;
         }
 
+        .fasting-active {
+            background: #d4edda !important;
+            border-left-color: #28a745 !important;
+        }
+
+        .period-active {
+            background: #fff3cd !important;
+            border-left-color: #ffc107 !important;
+        }
+
         @media (max-width: 480px) {
             .header h1 {
                 font-size: 20px;
@@ -330,13 +340,22 @@
         <div class="tab-buttons">
             <button class="tab-btn active" onclick="showTab('workout')">Workout</button>
             <button class="tab-btn" onclick="showTab('weight')">Weight</button>
+            <button class="tab-btn" onclick="showTab('fasting')">Fasting</button>
             <button class="tab-btn" onclick="showTab('progress')">Progress</button>
         </div>
 
         <!-- Workout Tab -->
         <div id="workout-tab" class="tab-content active">
             <div class="card">
-                <h2>Today's Workout</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h2 style="margin: 0;">Today's Workout</h2>
+                    <button id="period-toggle-btn" class="btn" onclick="togglePeriod()" style="padding: 8px 15px; font-size: 12px; background: #f5f5f5; color: #333;">
+                        <span id="period-status-text">Period: Off</span>
+                    </button>
+                </div>
+                <div id="period-indicator" class="hidden" style="padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 5px; margin-bottom: 15px; font-size: 14px; color: #856404;">
+                    🌸 Period mode active - Only 20-minute office workout available
+                </div>
                 <div class="day-selector">
                     <button class="day-btn" onclick="selectDayType('office')">📱 Office<br>(20 min)</button>
                     <button class="day-btn non-office active" onclick="selectDayType('nonoffice')">🏋️ Non-Office<br>(45-60 min)</button>
@@ -395,6 +414,48 @@
                         </a>
                         <a href="https://www.youtube.com/watch?v=AG3lA6ZTfVc" target="_blank" class="workout-link" data-type="nonoffice-main3">
                             ✅ 30-Min Core & Cardio Workout
+                        </a>
+                    </div>
+
+                    <div class="link-group">
+                        <h3>⚡ HIIT Workouts (15-30 min)</h3>
+                        <a href="https://www.youtube.com/watch?v=HhdYlniTjvg" target="_blank" class="workout-link" data-type="nonoffice-hiit">
+                            ✅ 20-Min Full Body HIIT (No Equipment)
+                        </a>
+                        <a href="https://www.youtube.com/watch?v=M0uO8X3_tEA" target="_blank" class="workout-link" data-type="nonoffice-hiit2">
+                            ✅ 25-Min High-Intensity Interval Training
+                        </a>
+                        <a href="https://www.youtube.com/watch?v=AG3lA6ZTfVc" target="_blank" class="workout-link" data-type="nonoffice-hiit3">
+                            ✅ 15-Min Quick HIIT Workout
+                        </a>
+                        <a href="https://www.youtube.com/watch?v=ykJmrZ5v0Oo" target="_blank" class="workout-link" data-type="nonoffice-hiit4">
+                            ✅ 30-Min HIIT Cardio & Strength
+                        </a>
+                    </div>
+
+                    <div class="link-group">
+                        <h3>🏃 Short Sprint Training (10-20 min)</h3>
+                        <a href="https://www.youtube.com/watch?v=HhdYlniTjvg" target="_blank" class="workout-link" data-type="nonoffice-sprint">
+                            ✅ 15-Min Sprint Interval Training
+                        </a>
+                        <a href="https://www.youtube.com/watch?v=M0uO8X3_tEA" target="_blank" class="workout-link" data-type="nonoffice-sprint2">
+                            ✅ 20-Min HIIT Sprint Workout
+                        </a>
+                        <a href="https://www.youtube.com/watch?v=AG3lA6ZTfVc" target="_blank" class="workout-link" data-type="nonoffice-sprint3">
+                            ✅ 10-Min Quick Sprint Burst
+                        </a>
+                    </div>
+
+                    <div class="link-group">
+                        <h3>🏋️ Resistance Training (25-35 min)</h3>
+                        <a href="https://www.youtube.com/watch?v=ykJmrZ5v0Oo" target="_blank" class="workout-link" data-type="nonoffice-resistance">
+                            ✅ 30-Min Full Body Resistance Training
+                        </a>
+                        <a href="https://www.youtube.com/watch?v=DENm10PI8Xc" target="_blank" class="workout-link" data-type="nonoffice-resistance2">
+                            ✅ 25-Min Bodyweight Resistance Workout
+                        </a>
+                        <a href="https://www.youtube.com/watch?v=AG3lA6ZTfVc" target="_blank" class="workout-link" data-type="nonoffice-resistance3">
+                            ✅ 35-Min Dumbbell Resistance Training
                         </a>
                     </div>
 
@@ -469,6 +530,69 @@
                 <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid #e0e0e0;">
                     <h3 style="font-size: 16px; margin-bottom: 10px;">Weekly Summary</h3>
                     <div id="weekly-summary">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fasting Tab -->
+        <div id="fasting-tab" class="tab-content">
+            <div class="card">
+                <h2>Fasting Tracker</h2>
+                
+                <div id="fasting-timer-section" style="text-align: center; padding: 20px; background: #f9f9f9; border-radius: 10px; margin-bottom: 20px;">
+                    <div style="font-size: 14px; color: #666; margin-bottom: 10px;">Current Fast</div>
+                    <div id="fasting-timer" style="font-size: 32px; font-weight: bold; color: #667eea; margin-bottom: 15px;">00:00:00</div>
+                    <div class="btn-group">
+                        <button id="start-fasting-btn" class="btn btn-primary" onclick="startFasting()">Start Fasting</button>
+                        <button id="end-fasting-btn" class="btn btn-secondary" onclick="endFasting()" style="display: none; background: #dc3545; color: white;">End Fasting</button>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <h3 style="font-size: 16px; margin-bottom: 10px;">Manual Entry</h3>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <div style="flex: 1;">
+                            <label style="display: block; font-size: 12px; color: #666; margin-bottom: 5px;">Start Time</label>
+                            <input type="time" id="fasting-start-time" style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="display: block; font-size: 12px; color: #666; margin-bottom: 5px;">End Time</label>
+                            <input type="time" id="fasting-end-time" style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="addManualFasting()" style="width: 100%;">Add Fasting Session</button>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <h3 style="font-size: 16px; margin-bottom: 10px;">Today's Fasting</h3>
+                    <div id="today-fasting-display" style="padding: 15px; background: #f9f9f9; border-radius: 8px; text-align: center; color: #666;">
+                        No fasting logged for today
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <h3 style="font-size: 16px; margin-bottom: 10px;">Fasting History</h3>
+                    <table class="weight-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Start</th>
+                                <th>End</th>
+                                <th>Duration</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fasting-table-body">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid #e0e0e0;">
+                    <h3 style="font-size: 16px; margin-bottom: 10px;">Weekly Summary</h3>
+                    <div id="fasting-weekly-summary">
                         <!-- Populated by JavaScript -->
                     </div>
                 </div>
